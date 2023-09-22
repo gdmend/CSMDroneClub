@@ -12,6 +12,11 @@
 		<!-- Remove this when import maps will be widely supported -->
 		<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
+		<div class="progress-bar-container">
+			<label for="progress-bar">Loadding...</label>
+			<progress id="progress-bar" value="0" max="100"></progress>
+		</div>
+
 		<script type="importmap">
 			{
 				"imports": {
@@ -61,11 +66,34 @@
 				scene.environment = pmremGenerator.fromScene( environment ).texture;
 				environment.dispose();
 
-				const ktx2Loader = new KTX2Loader()
+				const manager = new THREE.LoadingManager();
+				
+				// manager.onStart = function ( url, itemsLoaded, itemsTotal ) {
+				// 	console.log( 'Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+				// };
+
+				const progressBar = document.getElementById('progress-bar');
+
+				manager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+					progressBar.value = (itemsLoaded/itemsTotal) * 100;
+				};
+
+				const progressBarContainer = document.querySelector('.progress-bar-container');
+
+				manager.onLoad = function ( ) {
+					progressBarContainer.style.display = 'none';
+				};
+
+				// manager.onError = function ( url ) {
+				// 	console.log( 'There was an error loading ' + url );
+				// };
+
+
+				const ktx2Loader = new KTX2Loader(manager)
 					.setTranscoderPath( 'jsm/libs/basis/' )
 					.detectSupport( renderer );
 
-				const loader = new GLTFLoader().setPath( 'examples/models/gltf/' );;
+				const loader = new GLTFLoader(manager).setPath( 'examples/models/gltf/' );;
 				loader.setKTX2Loader( ktx2Loader );
 				loader.setMeshoptDecoder( MeshoptDecoder );
 				loader.load( 'minimodelexport2.glb', function ( gltf ) {
